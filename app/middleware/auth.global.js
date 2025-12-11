@@ -1,19 +1,21 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  // Jika user belum diketahui (masih null tapi belum load Firebase), jangan blokir dulu
-  if (user.value === undefined) {
+  // ⛔ Jangan lakukan apa pun sebelum Firebase selesai load sesi login
+  if (loading.value) {
     return;
   }
 
+  // daftar halaman admin yang butuh login
   const protectedRoutes = [
     "/categories",
-    "/posts"
+    "/posts",
   ];
 
-  if (protectedRoutes.some(r => to.path.startsWith(r))) {
-    if (!user.value) {
-      return navigateTo("/login");
-    }
+  const isProtected = protectedRoutes.some(r => to.path.startsWith(r));
+
+  // jika halaman admin tapi belum login → arahkan ke login
+  if (isProtected && !user.value) {
+    return navigateTo("/login");
   }
 });

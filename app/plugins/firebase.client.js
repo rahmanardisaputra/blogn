@@ -1,6 +1,13 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { 
+  getAuth, 
+  setPersistence, 
+  browserLocalPersistence,
+  onAuthStateChanged
+} from "firebase/auth";
+
+import { useAuth } from "@/composables/useAuth";
 
 export default defineNuxtPlugin(async () => {
   const firebaseConfig = {
@@ -12,16 +19,25 @@ export default defineNuxtPlugin(async () => {
     appId: "1:824189947102:web:0810dd4c7d21496ca3064f"
   };
 
+  // init firebase
   const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
   const db = getFirestore(app);
   const auth = getAuth(app);
 
-  // 🔥 PAKSA AUTH TETAP LOGIN MESKI REFRESH
+  // 🔥 Pastikan user TIDAK logout meski refresh
   await setPersistence(auth, browserLocalPersistence);
+
+  // ================================================
+  // 🔥 SUPER PENTING: Sinkronkan Firebase → useAuth()
+  // ================================================
+  const { setUser } = useAuth();
+
+  onAuthStateChanged(auth, (firebaseUser) => {
+    setUser(firebaseUser); // simpan user ke state Nuxt
+  });
 
   return {
     provide: { db, auth }
   };
 });
-
