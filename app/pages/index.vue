@@ -1,3 +1,4 @@
+<!-- pages/index.vue -->
 <script setup>
 import { useNuxtApp } from "#app";
 import { collection, getDocs } from "firebase/firestore";
@@ -7,60 +8,63 @@ definePageMeta({
 });
 
 const { $db } = useNuxtApp();
-const posts = ref([]);
+const categories = ref([]);
 const loading = ref(true);
 
 onMounted(async () => {
   loading.value = true;
 
+  // Ambil semua post
   const snap = await getDocs(collection($db, "posts"));
-  await new Promise(resolve => setTimeout(resolve, 600)); // delay biar skeleton terlihat
+  
+  // Ekstrak kategori unik
+  const allPosts = snap.docs.map(doc => doc.data());
+  const uniqueCategories = [...new Set(allPosts.map(p => p.categoryName).filter(Boolean))];
 
-  posts.value = snap.docs.map(d => d.data());
+  categories.value = uniqueCategories.sort();
   loading.value = false;
 });
 </script>
 
 <template>
   <div class="wrapper">
+    <h1 class="title">Project Blog</h1>
 
-    <h1 class="title">Artikel Terbaru</h1>
-
-    <!-- LOADING STATE (SKELETON) -->
+    <!-- Loading Skeleton -->
     <div v-if="loading" class="list">
       <div class="card skeleton" v-for="n in 4" :key="n">
         <div class="sk-title"></div>
-        <div class="sk-badge"></div>
-        <div class="sk-button"></div>
       </div>
     </div>
 
-    <!-- DATA READY -->
+    <!-- Daftar Kategori -->
     <div v-else class="list">
-      <div v-for="p in posts" :key="p.slug" class="card">
-
-        <div class="info">
-
-          <!-- KATEGORI -->
-          <span class="badge">{{ p.categoryName }}</span>
-
-          <!-- JUDUL -->
-          <NuxtLink :to="`/post/${p.slug}`" class="post-title">
-            {{ p.title }}
-          </NuxtLink>
-
-          <!-- BUTTON -->
-          <NuxtLink :to="`/post/${p.slug}`" class="readmore">
-            Baca selengkapnya →
-          </NuxtLink>
-
-        </div>
-
-      </div>
+      <NuxtLink
+        v-for="cat in categories"
+        :key="cat"
+        :to="`/view/kategori/${encodeURIComponent(cat)}`"
+        class="card category-link"
+      >
+        {{ cat }}
+        
+      </NuxtLink>
     </div>
-
   </div>
 </template>
+
+<script>
+// Helper untuk hitung jumlah post per kategori (opsional)
+export default {
+  methods: {
+    postsByCategory(categoryName) {
+      // Jika kamu mau tampilkan jumlah, kamu perlu simpan semua post
+      // Tapi biar ringan, kita skip dulu atau ambil di halaman kategori saja
+      // Untuk sekarang, kita kosongkan dulu logika ini
+      return []; // placeholder
+    }
+  }
+}
+</script>
 
 <style scoped>
 .wrapper {
@@ -75,113 +79,52 @@ onMounted(async () => {
   margin-bottom: 25px;
 }
 
-/* LIST */
 .list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
-/* CARD */
-.card {
+.category-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
   background: white;
   border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  transition: .2s;
+  text-decoration: none;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.2s;
 }
 
-.card:hover {
-  transform: translateY(-3px);
+.category-link:hover {
+  background: #f0f9ff;
+  color: #0ea5e9;
+  transform: translateY(-2px);
 }
 
-/* CATEGORY BADGE */
-.badge {
-  display: inline-block;
+.count {
   background: #e0f2fe;
   color: #0284c7;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
-/* TITLE */
-.post-title {
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  text-decoration: none;
-  margin: 8px 0 10px;
-}
-
-.post-title:hover {
-  color: #0ea5e9;
-}
-
-/* READ MORE */
-.readmore {
-  color: #0284c7;
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.readmore:hover {
-  text-decoration: underline;
-}
-
-/* ========================== */
-/* 🔥 SKELETON LOADING STYLE  */
-/* ========================== */
-
+/* Skeleton */
 .skeleton {
-  position: relative;
-  overflow: hidden;
   background: #f1f5f9;
+  padding: 16px 20px;
+  border-radius: 12px;
 }
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -150px;
-  height: 100%;
-  width: 150px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
-  );
-  animation: loading 1.2s infinite;
-}
-
-@keyframes loading {
-  0% { left: -150px; }
-  100% { left: 100%; }
-}
-
 .sk-title {
-  width: 60%;
   height: 20px;
   background: #dbe1e8;
   border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.sk-badge {
-  width: 100px;
-  height: 16px;
-  background: #dbe1e8;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-
-.sk-button {
-  width: 140px;
-  height: 16px;
-  background: #dbe1e8;
-  border-radius: 6px;
+  width: 70%;
 }
 </style>

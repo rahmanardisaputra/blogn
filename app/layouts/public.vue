@@ -11,11 +11,10 @@ const { user } = useAuth();
     <nav class="navbar">
       <div class="container nav-flex">
 
-        <NuxtLink to="/" class="brand">MyBlog</NuxtLink>
+        <NuxtLink to="/" class="brand">WokaBlog</NuxtLink>
 
         <div class="menu">
           <NuxtLink to="/" class="nav-item">Home</NuxtLink>
-          <NuxtLink to="/categories" class="nav-item">Kategori</NuxtLink>
 
           <!-- BUTTON LOGIN / DASHBOARD -->
           <NuxtLink

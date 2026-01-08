@@ -56,7 +56,7 @@ const save = async () => {
       <input v-model="title" class="input" placeholder="Judul post..." />
 
       <!-- KATEGORI -->
-      <label class="label">Kategori</label>
+      <label class="label">Project</label>
       <select v-model="categoryId" class="select">
         <option disabled value="">-- Pilih kategori --</option>
         <option v-for="c in categories" :value="c.id">

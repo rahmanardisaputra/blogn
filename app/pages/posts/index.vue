@@ -7,14 +7,28 @@ const posts = ref([]);
 
 const loadData = async () => {
   const snap = await getDocs(collection($db, "posts"));
-  posts.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // Urutkan: pertama per kategori (A-Z), lalu per judul (A-Z)
+  const sortedPosts = allPosts.sort((a, b) => {
+    const catA = (a.categoryName || '').toLowerCase();
+    const catB = (b.categoryName || '').toLowerCase();
+
+    if (catA !== catB) {
+      return catA.localeCompare(catB);
+    }
+
+    // Kategori sama → urutkan judul
+    return (a.title || '').toLowerCase().localeCompare((b.title || '').toLowerCase());
+  });
+
+  posts.value = sortedPosts;
 };
 
 onMounted(loadData);
 
 const hapus = async (id) => {
   if (!confirm("Yakin ingin menghapus post ini?")) return;
-
   await deleteDoc(doc($db, "posts", id));
   await loadData();
 };
