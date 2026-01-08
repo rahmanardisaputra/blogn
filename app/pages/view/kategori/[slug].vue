@@ -1,4 +1,3 @@
-<!-- pages/view/kategori/[slug].vue -->
 <script setup>
 import { useNuxtApp } from "#app";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -10,7 +9,6 @@ definePageMeta({
 const route = useRoute();
 const { $db } = useNuxtApp();
 
-// Ambil nama kategori dari URL (decode karena mungkin mengandung spasi/UTF-8)
 const categoryName = decodeURIComponent(route.params.slug);
 
 const posts = ref([]);
@@ -20,18 +18,38 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    // Query hanya post dengan categoryName yang cocok
     const q = query(
       collection($db, "posts"),
       where("categoryName", "==", categoryName)
     );
     const snap = await getDocs(q);
 
-    // Delay kecil biar skeleton terlihat (opsional)
     await new Promise(resolve => setTimeout(resolve, 600));
 
+    // ✅ Urutkan berdasarkan angka di judul (jika pola "Hari X"), 
+    //    kalau tidak, urutkan alfabet
     posts.value = snap.docs.map(doc => doc.data())
-    .sort((a, b) => a.title.localeCompare(b.title));
+      .sort((a, b) => {
+        // Coba ekstrak angka dari "Hari <angka>"
+        const matchA = a.title?.match(/^Hari\s+(\d+)/i);
+        const matchB = b.title?.match(/^Hari\s+(\d+)/i);
+
+        const numA = matchA ? parseInt(matchA[1]) : null;
+        const numB = matchB ? parseInt(matchB[1]) : null;
+
+        // Jika keduanya adalah "Hari X", urutkan berdasarkan angka
+        if (numA !== null && numB !== null) {
+          return numA - numB;
+        }
+
+        // Jika hanya salah satu "Hari X", yang "Hari X" didahulukan
+        if (numA !== null) return -1;
+        if (numB !== null) return 1;
+
+        // Jika keduanya bukan, urutkan alfabet
+        return (a.title || '').toLowerCase().localeCompare((b.title || '').toLowerCase());
+      });
+
   } catch (error) {
     console.error("Error fetching posts by category:", error);
     posts.value = [];

@@ -9,8 +9,8 @@ const loadData = async () => {
   const snap = await getDocs(collection($db, "posts"));
   const allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  // Urutkan: pertama per kategori (A-Z), lalu per judul (A-Z)
   const sortedPosts = allPosts.sort((a, b) => {
+    // 1. Urutkan berdasarkan kategori
     const catA = (a.categoryName || '').toLowerCase();
     const catB = (b.categoryName || '').toLowerCase();
 
@@ -18,8 +18,12 @@ const loadData = async () => {
       return catA.localeCompare(catB);
     }
 
-    // Kategori sama → urutkan judul
-    return (a.title || '').toLowerCase().localeCompare((b.title || '').toLowerCase());
+    // 2. Ekstrak angka dari judul (misal: "Hari 5" → 5)
+    const numA = parseInt(a.title.match(/^Hari\s+(\d+)/)?.[1] || 0);
+    const numB = parseInt(b.title.match(/^Hari\s+(\d+)/)?.[1] || 0);
+
+    // Urutkan berdasarkan angka
+    return numA - numB;
   });
 
   posts.value = sortedPosts;
